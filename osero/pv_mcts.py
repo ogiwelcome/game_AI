@@ -23,4 +23,67 @@ def nodes_to_scores(nodes):
     return scores
 def pv_mcts_scores(model, state, temperature):
     class node:
-        
+        def __init__(self, state, p):
+            self.state = state
+            self.p = p # 方策
+            self.w = 0 # 累計価値
+            self.n = 0 # 試行回数
+            self.child_nodes = None
+        def evaluate(self):
+            if self.state.is_end():
+                val = -1 if self.state.is_lose() else 0
+                self.w += val
+                self.n += 1
+                return val
+            elif not self.child_nodes:
+                policies, val = predict(model, self.state)
+                self.w += val
+                self.n += 1
+                self.child_nodes = []
+                for ac,pol in zip(self.state.legal_actions(), policies):
+                    self.child_nodes.append(node(self.state.next(ac)), pol)
+                return val
+            else:
+                val = -self.next_child_node().evaluate()
+                self.w += val
+                self.n += 1
+                return val
+        def next_child_node(self):
+            C_PUCT = 1.0
+            t = sum(nodes_to_scores(self.child_nodes))
+            pucb_values = []
+            for child_node in self.child_nodes:
+                v = (-child_node.w/child_node.n if child_node.n else 0)+C_PUCT*child_node.p*sqrt(t)/(1+child_node.n)
+                pucb_values.append(v)
+            return self.child_nodes[np.argmax(pucb_values)]
+    root_node = node(state, 0)
+    for rep in range(PV_EVALUATE_COUNT):
+        root_node.evaluate()
+    scores = nodes_to_scores(root_node.child_nodes)
+    if temperature==0:
+        ac = np.argmax(scores)
+        scores = np.zeros(len(scores))
+        scores[ac]=1
+    else:
+        scores = boltzman(scores,temperature)
+    return scores
+def pv_mcts_action(model, temperature=0):
+    def pv_mcts_action(state):
+        scores = pv_mcts_scores(model, state, temperature)
+        return np.random.choice(state.legal_actions(), p=scores)
+    return pv_mcts_action
+def boltzman(xs, temperature):
+    xs = [x**(1/temperature) for x in xs]
+    return [x/sum(xs) for x in xs]
+if __name__=='__main__':
+    path = sorted(Path('./model').glob('*.h5'))[-1]
+    model = load_model(str(path))
+    state = State()
+    next_action = pv_mcts_action(model, 1.0)
+    while True:
+        if state.is_end():
+            break
+        action = next_action(state)
+        state = state.next(action)
+        print(state)
+    
