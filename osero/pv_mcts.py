@@ -1,5 +1,5 @@
 from game import State
-from dual_network import dual_network
+from dual_network import DN_INPUT_SHAPE
 from math import sqrt
 from tensorflow.keras.models import load_model
 from pathlib import Path
@@ -10,7 +10,7 @@ PV_EVALUATE_COUNT = 50
 def predict(model, state):
     a, b, c = DN_INPUT_SHAPE
     x = np.array([state.pieces,state.enemy_pieces])
-    x = reshape(c,a,b).transpose(1,2,0).reshape(1,a,b,c)
+    x = x.reshape(c,a,b).transpose(1,2,0).reshape(1,a,b,c)
     y = model.predict(x,batch_size=1)
     policies = y[0][0][list(state.legal_actions())]
     policies /= sum(policies) if sum(policies) else 1
@@ -41,7 +41,7 @@ def pv_mcts_scores(model, state, temperature):
                 self.n += 1
                 self.child_nodes = []
                 for ac,pol in zip(self.state.legal_actions(), policies):
-                    self.child_nodes.append(node(self.state.next(ac)), pol)
+                    self.child_nodes.append(node(self.state.next(ac),pol))
                 return val
             else:
                 val = -self.next_child_node().evaluate()

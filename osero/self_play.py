@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pickle
 import os
-SP_GAME_COUNT = 500
+SP_GAME_COUNT = 10
 SP_TEMPERATURE = 1.0
 def first_player_value(ended_state):
     if ended_state.is_lose():
@@ -18,7 +18,7 @@ def write_data(history):
     now = datetime.now()
     os.makedirs('./data/', exist_ok=True)
     path = './data/{:04}{:02}{:02}{:02}{:02}{:02}.history'.format(\
-        now.year, now_month, now.day, now.hour, now.minute, now.second)
+        now.year, now.month, now.day, now.hour, now.minute, now.second)
     with open(path, mode='wb') as f:
         pickle.dump(history, f)
 def play(model):

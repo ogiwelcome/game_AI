@@ -7,14 +7,14 @@ DN_FILTERS = 128
 DN_RESIDUAL_NUM = 16
 DN_INPUT_SHAPE = (8,8,2)
 DN_OUTPUT_SIZE=65
-def conv(fliters):
+def conv(filters):
     return Conv2D(filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal', kernel_regularizer=l2(0.0005))
 def residual_block():
     def f(x):
         sc = x
         x = conv(DN_FILTERS)(x)
         x = BatchNormalization()(x)
-        x = Activation()(x)
+        x = Activation('relu')(x)
         x = conv(DN_FILTERS)(x)
         x = BatchNormalization()(x)
         x = Add()([x,sc])
