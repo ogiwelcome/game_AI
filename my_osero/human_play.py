@@ -1,5 +1,6 @@
 from game import State
 from mini_max import mini_max_ac
+from alpha_beta import alpha_beta_ac
 from pathlib import Path
 from threading import Thread
 import tkinter as tk
@@ -10,7 +11,7 @@ class GameUI(tk.Frame):
         tk.Frame.__init__(self,master)
         self.master.title('オセロ')
         self.state = State()
-        self.next_action = mini_max_ac
+        self.next_action = alpha_beta_ac # ここ弄る
         self.c = tk.Canvas(self,width=320,height=320,highlightthickness=0)
         self.c.bind('<Button-1>', self.turn_of_human)
         self.c.pack()
@@ -30,7 +31,7 @@ class GameUI(tk.Frame):
         legal_actions = self.state.legal_actions()
         if legal_actions == [64]:
             action = 64
-        if action != 64 and not action in legal_actions:
+        if action != 64 and (not action in legal_actions):
             return
         self.state = self.state.next(action)
         self.on_draw()
@@ -41,7 +42,7 @@ class GameUI(tk.Frame):
         action = self.next_action(self.state)
         self.state = self.state.next(action)
         self.on_draw()
-    def draw_pieces(self, index, first_player):
+    def draw_piece(self, index, first_player):
         x = (index%8)*40+5
         y = (index//8)*40+5
         if first_player:
@@ -56,9 +57,9 @@ class GameUI(tk.Frame):
             self.c.create_line(i*40,0,i*40,320,width=1.0,fill='#000000')
         for i in range(64):
             if self.state.pieces[i]:
-                self.draw_pieces(i,self.state.is_first_player())
+                self.draw_piece(i,self.state.is_first_player())
             if self.state.enemy_pieces[i]:
-                self.draw_pieces(i,not self.state.is_first_player())
+                self.draw_piece(i,not self.state.is_first_player())
 f = GameUI()
 f.pack()
 f.mainloop()
